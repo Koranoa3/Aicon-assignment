@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -224,6 +225,130 @@ func TestItem_Update(t *testing.T) {
 			assert.Equal(t, tt.newBrand, item.Brand)
 			assert.Equal(t, tt.newPrice, item.PurchasePrice)
 			assert.Equal(t, tt.newDate, item.PurchaseDate)
+
+			// UpdatedAt が更新されているかチェック
+			assert.True(t, item.UpdatedAt.After(originalUpdatedAt))
+		})
+	}
+}
+
+func TestItem_UpdatePartial(t *testing.T) {
+	// 初期アイテムを作成
+	item, err := NewItem("初期アイテム", "時計", "初期ブランド", 100000, "2023-01-01")
+	require.NoError(t, err)
+
+	originalName := item.Name
+	originalBrand := item.Brand
+	originalPrice := item.PurchasePrice
+	originalCategory := item.Category
+	originalDate := item.PurchaseDate
+	originalUpdatedAt := item.UpdatedAt
+	time.Sleep(1 * time.Millisecond) // UpdatedAt の変更を確認するため
+
+	tests := []struct {
+		name          string
+		newName       *string
+		newBrand      *string
+		newPrice      *int
+		wantErr       bool
+		expectedErr   string
+		expectedName  string
+		expectedBrand string
+		expectedPrice int
+	}{
+		{
+			name:          "正常系: 名前のみ更新",
+			newName:       func() *string { s := "更新された名前"; return &s }(),
+			expectedName:  "更新された名前",
+			expectedBrand: originalBrand,
+			expectedPrice: originalPrice,
+		},
+		{
+			name:          "正常系: ブランドのみ更新",
+			newBrand:      func() *string { s := "更新されたブランド"; return &s }(),
+			expectedName:  originalName,
+			expectedBrand: "更新されたブランド",
+			expectedPrice: originalPrice,
+		},
+		{
+			name:          "正常系: 価格のみ更新",
+			newPrice:      func() *int { p := 200000; return &p }(),
+			expectedName:  originalName,
+			expectedBrand: originalBrand,
+			expectedPrice: 200000,
+		},
+		{
+			name:     "正常系: 全フィールド更新",
+			newName:  func() *string { s := "新しい名前"; return &s }(),
+			newBrand: func() *string { s := "新しいブランド"; return &s }(),
+			newPrice: func() *int { p := 300000; return &p }(),
+			expectedName:  "新しい名前",
+			expectedBrand: "新しいブランド",
+			expectedPrice: 300000,
+		},
+		{
+			name:          "正常系: フィールド更新なし",
+			expectedName:  originalName,
+			expectedBrand: originalBrand,
+			expectedPrice: originalPrice,
+		},
+		{
+			name:        "異常系: 空の名前",
+			newName:     func() *string { s := ""; return &s }(),
+			wantErr:     true,
+			expectedErr: "name is required",
+		},
+		{
+			name:        "異常系: 空のブランド",
+			newBrand:    func() *string { s := ""; return &s }(),
+			wantErr:     true,
+			expectedErr: "brand is required",
+		},
+		{
+			name:        "異常系: 負の価格",
+			newPrice:    func() *int { p := -1; return &p }(),
+			wantErr:     true,
+			expectedErr: "purchase_price must be 0 or greater",
+		},
+		{
+			name:        "異常系: 名前が100文字超え",
+			newName:     func() *string { s := string(make([]rune, 101)); return &s }(),
+			wantErr:     true,
+			expectedErr: "name must be 100 characters or less",
+		},
+		{
+			name:        "異常系: ブランド名が100文字超え",
+			newBrand:    func() *string { s := strings.Repeat("A", 101); return &s }(),
+			wantErr:     true,
+			expectedErr: "brand must be 100 characters or less",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// テスト前に初期状態にリセット
+			item.Name = originalName
+			item.Brand = originalBrand
+			item.PurchasePrice = originalPrice
+
+			err := item.Patch(tt.newName, tt.newBrand, tt.newPrice)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErr)
+				return
+			}
+
+			assert.NoError(t, err)
+
+			// 更新後の値をチェック
+			assert.Equal(t, tt.expectedName, item.Name)
+			assert.Equal(t, tt.expectedBrand, item.Brand)
+			assert.Equal(t, tt.expectedPrice, item.PurchasePrice)
+
+			// 不変フィールドが変更されていないかチェック
+			assert.Equal(t, originalCategory, item.Category)
+			assert.Equal(t, originalDate, item.PurchaseDate)
 
 			// UpdatedAt が更新されているかチェック
 			assert.True(t, item.UpdatedAt.After(originalUpdatedAt))
