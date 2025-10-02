@@ -11,14 +11,15 @@ http://localhost:8080
 
 ### エンドポイント一覧
 
-| メソッド | パス | 説明 | ステータスコード |
-|---------|------|------|-----------------|
-| GET | `/health` | ヘルスチェック | 200 |
-| GET | `/items` | 全アイテム取得 | 200 |
-| POST | `/items` | アイテム登録 | 201, 400 |
-| GET | `/items/{id}` | 特定アイテム取得 | 200, 404 |
-| DELETE | `/items/{id}` | アイテム削除 | 204, 404 |
-| GET | `/items/summary` | カテゴリー別集計 | 200 |
+| メソッド | パス             | 説明             | ステータスコード |
+| -------- | ---------------- | ---------------- | ---------------- |
+| GET      | `/health`        | ヘルスチェック   | 200              |
+| GET      | `/items`         | 全アイテム取得   | 200              |
+| POST     | `/items`         | アイテム登録     | 201, 400         |
+| GET      | `/items/{id}`    | 特定アイテム取得 | 200, 404         |
+| PATCH    | `/items/{id}`    | アイテム部分更新 | 200, 400, 404    |
+| DELETE   | `/items/{id}`    | アイテム削除     | 204, 404         |
+| GET      | `/items/summary` | カテゴリー別集計 | 200              |
 
 ### データ形式
 
@@ -45,13 +46,24 @@ http://localhost:8080
 
 ### バリデーションルール
 
-| フィールド | 必須 | 制限 |
-|-----------|------|------|
-| name | ✓ | 100文字以内 |
-| category | ✓ | 有効なカテゴリーのみ |
-| brand | ✓ | 100文字以内 |
-| purchase_price | ✓ | 0以上の整数 |
-| purchase_date | ✓ | YYYY-MM-DD形式 |
+#### POST /items (登録時)
+| フィールド     | 必須 | 制限                 |
+| -------------- | ---- | -------------------- |
+| name           | ✓    | 100文字以内          |
+| category       | ✓    | 有効なカテゴリーのみ |
+| brand          | ✓    | 100文字以内          |
+| purchase_price | ✓    | 0以上の整数          |
+| purchase_date  | ✓    | YYYY-MM-DD形式       |
+
+#### PATCH /items/{id} (部分更新時)
+| フィールド     | 必須 | 制限        | 備考               |
+| -------------- | ---- | ----------- | ------------------ |
+| name           | -    | 100文字以内 | 更新可能           |
+| brand          | -    | 100文字以内 | 更新可能           |
+| purchase_price | -    | 0以上の整数 | 更新可能           |
+| category       | -    | -           | **更新不可**       |
+| purchase_date  | -    | -           | **更新不可**       |
+| id, created_at | -    | -           | **不変フィールド** |
 
 ### API使用例
 
@@ -94,12 +106,53 @@ curl -X POST http://localhost:8080/items \
 curl -X GET http://localhost:8080/items/1
 ```
 
-#### 4. アイテム削除
+#### 4. アイテム部分更新
+```bash
+# 名前のみ更新
+curl -X PATCH http://localhost:8080/items/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "新しいアイテム名"
+  }'
+
+# ブランドと価格を更新
+curl -X PATCH http://localhost:8080/items/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "brand": "OMEGA",
+    "purchase_price": 800000
+  }'
+
+# 全ての更新可能フィールドを更新
+curl -X PATCH http://localhost:8080/items/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "更新されたアイテム",
+    "brand": "CARTIER",
+    "purchase_price": 1200000
+  }'
+```
+
+**レスポンス:**
+```json
+{
+  "id": 1,
+  "name": "更新されたアイテム",
+  "category": "時計",
+  "brand": "CARTIER",
+  "purchase_price": 1200000,
+  "purchase_date": "2023-01-15",
+  "created_at": "2023-01-15T10:00:00Z",
+  "updated_at": "2024-01-20T15:30:00Z"
+}
+```
+
+#### 5. アイテム削除
 ```bash
 curl -X DELETE http://localhost:8080/items/1
 ```
 
-#### 5. カテゴリー別集計
+#### 6. カテゴリー別集計
 ```bash
 curl -X GET http://localhost:8080/items/summary
 ```
