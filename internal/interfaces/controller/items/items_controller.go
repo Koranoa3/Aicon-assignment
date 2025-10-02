@@ -198,8 +198,32 @@ func validateCreateItemInput(input usecase.CreateItemInput) []string {
 
 func validatePatchItemInput(input usecase.PatchItemInput) []string {
 	var errs []string
+	
+	// PATCHではフィールドがオプションなので、指定されたフィールドのみチェック
+	if input.Name != nil {
+		if *input.Name == "" {
+			errs = append(errs, "name cannot be empty")
+		}
+		if len(*input.Name) > 100 {
+			errs = append(errs, "name must be 100 characters or less")
+		}
+	}
 
-	// TODO バリデーション
+	if input.Brand != nil {
+		if *input.Brand == "" {
+			errs = append(errs, "brand cannot be empty")
+		}
+		if len(*input.Brand) > 100 {
+			errs = append(errs, "brand must be 100 characters or less")
+		}
+	}
+
+	if input.PurchasePrice != nil {
+		if *input.PurchasePrice < 0 {
+			errs = append(errs, "purchase_price must be 0 or greater")
+		}
+	}
+
 
 	return errs
 }
