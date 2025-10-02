@@ -112,8 +112,24 @@ func (r *ItemRepository) Update(ctx context.Context, item *entity.Item) (*entity
 }
 
 func (r *ItemRepository) PatchItem(ctx context.Context, item *entity.Item) (*entity.Item, error) {
-	// ドメイン層で既に部分更新が適用されたアイテムを受け取る
-	return r.Update(ctx, item)
+	query := `
+		UPDATE items 
+		SET name = ?, brand = ?, purchase_price = ?, updated_at = ?
+		WHERE id = ?
+	`
+
+	_, err := r.Execute(ctx, query,
+		item.Name,
+		item.Brand,
+		item.PurchasePrice,
+		item.UpdatedAt,
+		item.ID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", domainErrors.ErrDatabaseError, err.Error())
+	}
+
+	return r.FindByID(ctx, item.ID)
 }
 
 func (r *ItemRepository) Delete(ctx context.Context, id int64) error {

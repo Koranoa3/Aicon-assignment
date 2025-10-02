@@ -132,6 +132,7 @@ func (h *ItemHandler) PatchItem(c echo.Context) error {
 		}
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error: "failed to update item",
+			Details: []string{err.Error()},
 		})
 	}
 
