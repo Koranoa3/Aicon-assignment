@@ -88,6 +88,34 @@ func (r *ItemRepository) Create(ctx context.Context, item *entity.Item) (*entity
 	return r.FindByID(ctx, id)
 }
 
+func (r *ItemRepository) Update(ctx context.Context, item *entity.Item) (*entity.Item, error) {
+	query := `
+        UPDATE items 
+        SET name = ?, category = ?, brand = ?, purchase_price = ?, purchase_date = ?, updated_at = ?
+        WHERE id = ?
+    `
+
+	_, err := r.Execute(ctx, query,
+		item.Name,
+		item.Category,
+		item.Brand,
+		item.PurchasePrice,
+		item.PurchaseDate,
+		item.UpdatedAt,
+		item.ID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", domainErrors.ErrDatabaseError, err.Error())
+	}
+
+	return r.FindByID(ctx, item.ID)
+}
+
+func (r *ItemRepository) PartialUpdate(ctx context.Context, item *entity.Item) (*entity.Item, error) {
+	// ドメイン層で既に部分更新が適用されたアイテムを受け取る
+	return r.Update(ctx, item)
+}
+
 func (r *ItemRepository) Delete(ctx context.Context, id int64) error {
 	query := `DELETE FROM items WHERE id = ?`
 

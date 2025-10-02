@@ -17,6 +17,12 @@ type ItemRepository interface {
 	// Create creates a new item and returns it with the generated ID
 	Create(ctx context.Context, item *entity.Item) (*entity.Item, error)
 
+	// Update updates an item (all fields)
+	Update(ctx context.Context, item *entity.Item) (*entity.Item, error)
+
+	// PartialUpdate updates an item (only specified fields for PATCH)
+	PartialUpdate(ctx context.Context, item *entity.Item) (*entity.Item, error)
+
 	// Delete deletes an item by ID
 	Delete(ctx context.Context, id int64) error
 
