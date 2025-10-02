@@ -102,7 +102,43 @@ func (i *Item) Patch(name, brand *string, purchasePrice *int) error {
 	}
 	i.UpdatedAt = time.Now()
 
-	return i.Validate()
+	return i.ValidatePatched(name, brand, purchasePrice)
+}
+
+// PATCH用のバリデーション（指定されたフィールドのみ）
+func (i *Item) ValidatePatched(name, brand *string, purchasePrice *int) error {
+	var errs []string
+
+	// nameが指定された場合のみバリデーション
+	if name != nil {
+		if *name == "" {
+			errs = append(errs, "name is required")
+		} else if len(*name) > 100 {
+			errs = append(errs, "name must be 100 characters or less")
+		}
+	}
+
+	// brandが指定された場合のみバリデーション
+	if brand != nil {
+		if *brand == "" {
+			errs = append(errs, "brand is required")
+		} else if len(*brand) > 100 {
+			errs = append(errs, "brand must be 100 characters or less")
+		}
+	}
+
+	// purchase_priceが指定された場合のみバリデーション
+	if purchasePrice != nil {
+		if *purchasePrice < 0 {
+			errs = append(errs, "purchase_price must be 0 or greater")
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, ", "))
+	}
+
+	return nil
 }
 
 // カテゴリーのバリデーション
