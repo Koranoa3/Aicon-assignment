@@ -113,7 +113,7 @@ func (u *itemUsecase) PatchItem(ctx context.Context, id int64, input PatchItemIn
 	}
 
 	// リポジトリで更新
-	updatedItem, err := u.itemRepo.PartialUpdate(ctx, item)
+	updatedItem, err := u.itemRepo.PatchItem(ctx, item)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update item: %w", err)
 	}

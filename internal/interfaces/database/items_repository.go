@@ -111,7 +111,7 @@ func (r *ItemRepository) Update(ctx context.Context, item *entity.Item) (*entity
 	return r.FindByID(ctx, item.ID)
 }
 
-func (r *ItemRepository) PartialUpdate(ctx context.Context, item *entity.Item) (*entity.Item, error) {
+func (r *ItemRepository) PatchItem(ctx context.Context, item *entity.Item) (*entity.Item, error) {
 	// ドメイン層で既に部分更新が適用されたアイテムを受け取る
 	return r.Update(ctx, item)
 }
